@@ -12,15 +12,21 @@ List<RouteBase> get $appRoutes => [
 
 RouteBase get $startRoute => GoRouteData.$route(
       path: '/',
+      name: 'Start',
       factory: $StartRouteExtension._fromState,
       routes: [
         GoRouteData.$route(
           path: 'settings',
+          name: 'Settings',
           factory: $SettingsRouteExtension._fromState,
         ),
         GoRouteData.$route(
           path: 'hangman/:questionId',
           factory: $HangmanRouteExtension._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'hangman',
+          factory: $RandHangmanRouteExtension._fromState,
         ),
       ],
     );
@@ -62,6 +68,22 @@ extension $HangmanRouteExtension on HangmanRoute {
 
   String get location => GoRouteData.$location(
         '/hangman/${Uri.encodeComponent(questionId.toString())}',
+      );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+}
+
+extension $RandHangmanRouteExtension on RandHangmanRoute {
+  static RandHangmanRoute _fromState(GoRouterState state) =>
+      const RandHangmanRoute();
+
+  String get location => GoRouteData.$location(
+        '/hangman',
       );
 
   void go(BuildContext context) => context.go(location);

@@ -5,5 +5,4 @@ final class ProjectConstants {
       'darkMode'; // bool :  darkMode = true (dark) darkMode = false (light) darkMode = not present (System)
 
   static const String colorSchemeStorageKey = 'colorScheme';
-
 }

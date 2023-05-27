@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:bot_toast/bot_toast.dart';
+import 'package:eurohang/question.dart';
 import 'package:eurohang/settings.dart';
 import 'package:eurohang/start.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +19,12 @@ part 'app.g.dart';
   name: 'Start',
   routes: <TypedGoRoute<GoRouteData>>[
     TypedGoRoute<SettingsRoute>(path: 'settings', name: 'Settings'),
-    TypedGoRoute<HangmanRoute>(path: 'hangman/:questionId', name: 'Hangman'),
+    TypedGoRoute<HangmanRoute>(
+      path: 'hangman/:questionId',
+    ),
+    TypedGoRoute<RandHangmanRoute>(
+      path: 'hangman',
+    ),
   ],
 )
 class StartRoute extends GoRouteData {
@@ -26,14 +35,37 @@ class StartRoute extends GoRouteData {
       const StartScreen();
 }
 
-class HangmanRoute extends GoRouteData {
-  final int questionId;
-
-  const HangmanRoute({required this.questionId});
+class RandHangmanRoute extends GoRouteData {
+  const RandHangmanRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      HangmanScreen(questionId: questionId);
+  FutureOr<String?> redirect(BuildContext context, GoRouterState state) {
+    return HangmanRoute(questionId: Random().nextInt(10)).location;
+  }
+}
+
+class HangmanRoute extends GoRouteData {
+  const HangmanRoute({required this.questionId});
+  final int questionId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    final question = _fetchQuestionFromId(questionId);
+    return HangmanScreen(question: question);
+  }
+}
+
+Question _fetchQuestionFromId(int id) {
+  return Question(
+      id: 0,
+      guess: 'The Zebra',
+      moreInfo: Uri.parse('https://yahoo.com'),
+      partPaths: (
+        part3: 'a',
+        part4: 'a',
+        part5: 'a',
+        part6: 'a',
+      ));
 }
 
 class SettingsRoute extends GoRouteData {
