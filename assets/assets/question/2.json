@@ -1,0 +1,11 @@
+{
+  "id": 2,
+  "guess": "The Cow",
+  "moreInfo": "https://gogl.com",
+  "partPaths": {
+    "part3": "abc",
+    "part4": "abc",
+    "part5": "abc",
+    "part6": "abc"
+  }
+}

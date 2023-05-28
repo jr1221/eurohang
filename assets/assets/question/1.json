@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "guess": "The Elephant",
+  "moreInfo": "https://twitter.com",
+  "partPaths": {
+    "part3": "abc",
+    "part4": "abc",
+    "part5": "abc",
+    "part6": "abc"
+  }
+}
