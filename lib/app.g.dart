@@ -17,16 +17,19 @@ RouteBase get $startRoute => GoRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: 'settings',
-          name: 'Settings',
           factory: $SettingsRouteExtension._fromState,
         ),
         GoRouteData.$route(
-          path: 'hangman/:questionId',
+          path: 'hangman',
+          factory: $LoadHangmanRouteExtension._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'play/:question',
           factory: $HangmanRouteExtension._fromState,
         ),
         GoRouteData.$route(
-          path: 'hangman',
-          factory: $RandHangmanRouteExtension._fromState,
+          path: 'browse',
+          factory: $BrowseQuestionsRouteExtension._fromState,
         ),
       ],
     );
@@ -61,13 +64,17 @@ extension $SettingsRouteExtension on SettingsRoute {
       context.pushReplacement(location);
 }
 
-extension $HangmanRouteExtension on HangmanRoute {
-  static HangmanRoute _fromState(GoRouterState state) => HangmanRoute(
-        questionId: int.parse(state.pathParameters['questionId']!),
+extension $LoadHangmanRouteExtension on LoadHangmanRoute {
+  static LoadHangmanRoute _fromState(GoRouterState state) => LoadHangmanRoute(
+        questionId:
+            _$convertMapValue('question-id', state.queryParameters, int.parse),
       );
 
   String get location => GoRouteData.$location(
-        '/hangman/${Uri.encodeComponent(questionId.toString())}',
+        '/hangman',
+        queryParams: {
+          if (questionId != null) 'question-id': questionId!.toString(),
+        },
       );
 
   void go(BuildContext context) => context.go(location);
@@ -78,12 +85,13 @@ extension $HangmanRouteExtension on HangmanRoute {
       context.pushReplacement(location);
 }
 
-extension $RandHangmanRouteExtension on RandHangmanRoute {
-  static RandHangmanRoute _fromState(GoRouterState state) =>
-      const RandHangmanRoute();
+extension $HangmanRouteExtension on HangmanRoute {
+  static HangmanRoute _fromState(GoRouterState state) => HangmanRoute(
+        question: state.pathParameters['question']!,
+      );
 
   String get location => GoRouteData.$location(
-        '/hangman',
+        '/play/${Uri.encodeComponent(question)}',
       );
 
   void go(BuildContext context) => context.go(location);
@@ -92,4 +100,29 @@ extension $RandHangmanRouteExtension on RandHangmanRoute {
 
   void pushReplacement(BuildContext context) =>
       context.pushReplacement(location);
+}
+
+extension $BrowseQuestionsRouteExtension on BrowseQuestionsRoute {
+  static BrowseQuestionsRoute _fromState(GoRouterState state) =>
+      const BrowseQuestionsRoute();
+
+  String get location => GoRouteData.$location(
+        '/browse',
+      );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
 }

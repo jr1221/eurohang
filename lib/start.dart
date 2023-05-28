@@ -10,25 +10,42 @@ class StartScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Eurohang'),
-        leading: const Image(image: AssetImage('assets/logo/logo.png')),
+        leading: const Image(
+          image: AssetImage('assets/logo/logo.png'),
+        ),
         centerTitle: true,
         //  leading: const Image(image: AssetImage('assets/logo/logo.png')),
         actions: [
           IconButton(
-              icon: const Icon(
-                Icons.settings,
-              ),
-              onPressed: () => context.go('/settings')),
+            icon: const Icon(
+              Icons.settings,
+            ),
+            onPressed: () => context.go('/settings'),
+          ),
         ],
       ),
-      body: ListView(
-        children: [
-          ElevatedButton(onPressed: () {
-            const RandHangmanRoute().push(context);
-          }, child: const Text('Play Now!'))
-        ],
+      body: Center(
+        child: Column(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                const LoadHangmanRoute().push(context);
+              },
+              child: const Text(
+                'Play Now!',
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                const BrowseQuestionsRoute().push(context);
+              },
+              child: const Text(
+                'See questions',
+              ),
+            ),
+          ],
+        ),
       ),
     );
-    ;
   }
 }

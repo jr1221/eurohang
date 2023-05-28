@@ -38,6 +38,7 @@ dependencies:
   confetti:
   just_audio: ^0.9.33
   just_audio_mpv: any
+  json_annotation: ^4.8.1
 
 
 
@@ -47,6 +48,7 @@ dev_dependencies:
   go_router_builder: any
   build_runner: any
   build_verify: any
+  json_serializable: ^6.7.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -67,6 +69,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo/logo.png
+    - assets/question/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
