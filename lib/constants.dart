@@ -7,4 +7,7 @@ final class ProjectConstants {
   static const String colorSchemeStorageKey = 'colorScheme';
 
   static const int numberOfQuestions = 2;
+
+  static const String definitionsPath = 'assets/question/definitions/';
+  static const String imagesPath = 'assets/question/images/';
 }

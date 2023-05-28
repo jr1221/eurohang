@@ -15,7 +15,7 @@ class BrowseQuestionsScreen extends StatelessWidget {
     for (int i = 1; i <= ProjectConstants.numberOfQuestions; i++) {
       questions.add(Question.fromJson(
         jsonDecode(
-          await rootBundle.loadString('assets/question/$i.json'),
+          await rootBundle.loadString('${ProjectConstants.definitionsPath}$i.json'),
         ),
       ));
     }
@@ -76,7 +76,6 @@ class BrowseQuestionsScreen extends StatelessWidget {
               Question(
                   moreInfo: Uri.parse('http://google.com'),
                   guess: 'a',
-                  partPaths: (part3: 'a', part4: 'a', part5: 'a', part6: 'a'),
                   id: 0)
             ]));
   }

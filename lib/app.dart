@@ -51,7 +51,7 @@ class LoadHangmanRoute extends GoRouteData {
   @override
   FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
     final question = await rootBundle.loadString(
-        'assets/question/${questionId ?? (Random().nextInt(ProjectConstants.numberOfQuestions) + 1)}.json');
+        '${ProjectConstants.definitionsPath}${questionId ?? (Random().nextInt(ProjectConstants.numberOfQuestions) + 1)}.json');
     return HangmanRoute(question: question).location;
   }
 
@@ -98,7 +98,7 @@ class SettingsRoute extends GoRouteData {
 }
 
 final _router = GoRouter(
-    initialLocation: '/', debugLogDiagnostics: true, routes: $appRoutes);
+    initialLocation: '/', debugLogDiagnostics: false, routes: $appRoutes);
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);

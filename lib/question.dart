@@ -9,13 +9,11 @@ class Question {
 
   Uri moreInfo;
 
-  ({String part3, String part4, String part5, String part6}) partPaths;
-
-  Question(
-      {required this.id,
-      required this.guess,
-      required this.moreInfo,
-      required this.partPaths});
+  Question({
+    required this.id,
+    required this.guess,
+    required this.moreInfo,
+  });
 
   factory Question.fromJson(Map<String, dynamic> json) =>
       _$QuestionFromJson(json);

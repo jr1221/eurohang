@@ -10,9 +10,7 @@ class StartScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Eurohang'),
-        leading: const Image(
-          image: AssetImage('assets/logo/logo.png'),
-        ),
+        leading: Image.asset('assets/logo/logo.png'),
         centerTitle: true,
         //  leading: const Image(image: AssetImage('assets/logo/logo.png')),
         actions: [

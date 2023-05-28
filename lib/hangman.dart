@@ -1,6 +1,7 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:confetti/confetti.dart';
 import 'package:eurohang/app.dart';
+import 'package:eurohang/constants.dart';
 import 'package:eurohang/question.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,49 +61,14 @@ class _HangmanScreenState extends State<HangmanScreen> {
     super.dispose();
     _guessFormController.dispose();
     _confettiController.dispose();
+    _audioPlayer.dispose();
   }
 
-  _showWinOrLooseDialog() {
+  void _updateDialogs() {
     if (_wrongLetters > 6) {
-      _audioPlayer.setAsset('audio/lost.wav');
-      _audioPlayer.play();
-      showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('You Lost!'),
-          content: Text('The answer was ${widget.question.guess}'),
-          actionsAlignment: MainAxisAlignment.center,
-          actionsOverflowDirection: VerticalDirection.down,
-          actionsOverflowAlignment: OverflowBarAlignment.center,
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                const LoadHangmanRoute().pushReplacement(context);
-              },
-              child: const Text('Play Again'),
-            ),
-            TextButton(
-              child: const Text('Learn More'),
-              onPressed: () async {
-                if (!await launchUrl(widget.question.moreInfo)) {
-                  throw Exception(
-                      'Could not launch ${widget.question.moreInfo}');
-                }
-              },
-            ),
-            TextButton(
-              onPressed: () {
-                const StartRoute().pushReplacement(context);
-              },
-              child: const Text('Go Home'),
-            ),
-          ],
-        ),
-      );
+      _lostUI();
     } else if (_wrongLetters == 6) {
-      _audioPlayer.setAsset('audio/oneLeft.wav');
-      _audioPlayer.play();
+      _oneLeftUI();
     } else {
       final strList = widget.question.guess.split('');
       strList.removeWhere((element) => element == ' ');
@@ -115,14 +81,46 @@ class _HangmanScreenState extends State<HangmanScreen> {
     }
   }
 
+  void _oneLeftUI() {
+    _audioPlayer.setAsset('audio/oneLeft.wav');
+    _audioPlayer.play();
+  }
+
+  void _incorrectLetterUI() {
+    _audioPlayer.setAsset('audio/incorrectLetter.wav');
+    _audioPlayer.play();
+  }
+
+  void _correctLetterUI() {
+    _audioPlayer.setAsset('audio/correctLetter.wav');
+    _audioPlayer.play();
+  }
+
   void _winUI() {
     _audioPlayer.setAsset('audio/win.wav');
     _audioPlayer.play();
     _confettiController.play();
+    endNotifUI(true);
+  }
+
+  void _lostUI() {
+    _audioPlayer.setAsset('audio/lost.wav');
+    _audioPlayer.play();
+    endNotifUI(false);
+  }
+
+  void endNotifUI(bool win) {
+    final Text endText;
+    if (win) {
+      endText = const Text('You Won!');
+    } else {
+      endText = const Text('You Lost!');
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('You Won!'),
+        title: endText,
         content: Text('The answer was ${widget.question.guess}'),
         actions: [
           ElevatedButton(
@@ -150,6 +148,26 @@ class _HangmanScreenState extends State<HangmanScreen> {
     );
   }
 
+  String _imageAssetFromWrongGuesses(int wrongGuesses) {
+    switch (wrongGuesses) {
+      case 0:
+        return '${ProjectConstants.imagesPath}0.png';
+      case 1:
+        return '${ProjectConstants.imagesPath}1.png';
+      case 2:
+        return '${ProjectConstants.imagesPath}2.png';
+      case 3:
+        return '${ProjectConstants.imagesPath}${widget.question.id}-3.png';
+      case 4:
+        return '${ProjectConstants.imagesPath}${widget.question.id}-4.png';
+      case 5:
+        return '${ProjectConstants.imagesPath}${widget.question.id}-5.png';
+      case 6:
+      default:
+        return '${ProjectConstants.imagesPath}${widget.question.id}-6.png';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,36 +184,44 @@ class _HangmanScreenState extends State<HangmanScreen> {
               blastDirectionality: BlastDirectionality.explosive,
             ),
             Text('$_wrongLetters wrong letters'),
-            GridView.builder(
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 40, crossAxisSpacing: 2.5),
-              scrollDirection: Axis.vertical,
-              itemCount: widget.question.guess.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                final letter = widget.question.guess[index].toLowerCase();
-                if (_lettersGuessed.contains(letter)) {
-                  return Text(
-                    letter,
-                    textScaleFactor: 1.5,
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  if (letter == ' ') {
-                    return const Text(
-                      '      ',
-                      textScaleFactor: 1.5,
-                      textAlign: TextAlign.center,
-                    );
-                  }
-                  return const Text(
-                    '_',
-                    textScaleFactor: 1.5,
-                    textAlign: TextAlign.center,
-                  );
-                }
-              },
+            Row(
+              children: [
+                Image.asset(_imageAssetFromWrongGuesses(_wrongLetters)),
+                Expanded(
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 40, crossAxisSpacing: 2.5),
+                    scrollDirection: Axis.vertical,
+                    itemCount: widget.question.guess.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final letter = widget.question.guess[index].toLowerCase();
+                      if (_lettersGuessed.contains(letter)) {
+                        return Text(
+                          letter,
+                          textScaleFactor: 1.5,
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        if (letter == ' ') {
+                          return const Text(
+                            '      ',
+                            textScaleFactor: 1.5,
+                            textAlign: TextAlign.center,
+                          );
+                        }
+                        return const Text(
+                          '_',
+                          textScaleFactor: 1.5,
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -226,13 +252,11 @@ class _HangmanScreenState extends State<HangmanScreen> {
                               .toLowerCase()
                               .contains(letter)) {
                             _wrongLetters++;
-                            _audioPlayer.setAsset('audio/incorrectLetter.wav');
-                            _audioPlayer.play();
+                            _incorrectLetterUI();
                           } else {
-                            _audioPlayer.setAsset('audio/correctLetter.wav');
-                            _audioPlayer.play();
+                            _correctLetterUI();
                           }
-                          _showWinOrLooseDialog();
+                          _updateDialogs();
                         },
                       );
                     },
@@ -290,8 +314,8 @@ class _HangmanScreenState extends State<HangmanScreen> {
               height: 16,
             ),
             ElevatedButton(
-              onPressed: () => context.pop(false),
-              child: const Text('Return'),
+              onPressed: () => context.pop(),
+              child: const Text('Exit'),
             )
           ],
         ),
