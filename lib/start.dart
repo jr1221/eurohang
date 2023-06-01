@@ -31,14 +31,19 @@ class StartScreen extends StatelessWidget {
               },
               child: const Text(
                 'Play Now!',
+                textScaleFactor: 1.5,
               ),
             ),
+            const SizedBox(height: 15),
+            const Text('-or-'),
+            const SizedBox(height: 15),
             ElevatedButton(
               onPressed: () {
                 const BrowseQuestionsRoute().push(context);
               },
               child: const Text(
                 'See questions',
+                textScaleFactor: 1.5,
               ),
             ),
           ],
