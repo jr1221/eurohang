@@ -20,7 +20,7 @@ RouteBase get $startRoute => GoRouteData.$route(
           factory: $SettingsRouteExtension._fromState,
         ),
         GoRouteData.$route(
-          path: 'hangman',
+          path: 'load',
           factory: $LoadHangmanRouteExtension._fromState,
         ),
         GoRouteData.$route(
@@ -71,7 +71,7 @@ extension $LoadHangmanRouteExtension on LoadHangmanRoute {
       );
 
   String get location => GoRouteData.$location(
-        '/hangman',
+        '/load',
         queryParams: {
           if (questionId != null) 'question-id': questionId!.toString(),
         },

@@ -57,6 +57,12 @@ class _HangmanScreenState extends State<HangmanScreen> {
   final TextEditingController _guessFormController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _audioPlayer.setAsset('assets/audio/gameTransition.wav').then((value) => _audioPlayer.play());
+  }
+
+  @override
   void dispose() {
     super.dispose();
     _guessFormController.dispose();
@@ -81,32 +87,37 @@ class _HangmanScreenState extends State<HangmanScreen> {
     }
   }
 
-  void _oneLeftUI() {
-    _audioPlayer.setAsset('audio/oneLeft.wav');
-    _audioPlayer.play();
+  Future<void> _oneLeftUI() async {
+    await _audioPlayer.stop();
+    await _audioPlayer.setAsset('assets/audio/oneLeft.wav');
+    await _audioPlayer.play();
   }
 
-  void _incorrectLetterUI() {
-    _audioPlayer.setAsset('audio/incorrectLetter.wav');
-    _audioPlayer.play();
+  Future<void> _incorrectLetterUI() async {
+    await _audioPlayer.stop();
+    await _audioPlayer.setAsset('assets/audio/incorrectLetter.wav');
+    await _audioPlayer.play();
   }
 
-  void _correctLetterUI() {
-    _audioPlayer.setAsset('audio/correctLetter.wav');
-    _audioPlayer.play();
+  Future<void> _correctLetterUI() async {
+    await _audioPlayer.stop();
+    await _audioPlayer.setAsset('assets/audio/correctLetter.wav');
+    await _audioPlayer.play();
   }
 
-  void _winUI() {
-    _audioPlayer.setAsset('audio/win.wav');
-    _audioPlayer.play();
-    _confettiController.play();
+  Future<void> _winUI() async {
     endNotifUI(true);
+    await _audioPlayer.stop();
+    await _audioPlayer.setAsset('assets/audio/win.wav');
+    await _audioPlayer.play();
+    _confettiController.play();
   }
 
-  void _lostUI() {
-    _audioPlayer.setAsset('audio/lost.wav');
-    _audioPlayer.play();
+  Future<void> _lostUI() async {
     endNotifUI(false);
+    await _audioPlayer.stop();
+    await _audioPlayer.setAsset('assets/audio/lost.wav');
+    await _audioPlayer.play();
   }
 
   void endNotifUI(bool win) {

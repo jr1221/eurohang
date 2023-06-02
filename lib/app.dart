@@ -25,7 +25,7 @@ part 'app.g.dart';
       path: 'settings',
     ),
     TypedGoRoute<LoadHangmanRoute>(
-      path: 'hangman',
+      path: 'load',
     ),
     TypedGoRoute<HangmanRoute>(
       path: 'play/:question',
@@ -45,24 +45,31 @@ class StartRoute extends GoRouteData {
 
 class LoadHangmanRoute extends GoRouteData {
   const LoadHangmanRoute({this.questionId});
-
   final int? questionId;
 
   @override
   FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
     final question = await rootBundle.loadString(
         '${ProjectConstants.definitionsPath}${questionId ?? (Random().nextInt(ProjectConstants.numberOfQuestions) + 1)}.json');
-    return HangmanRoute(question: question).location;
+    return HangmanRoute(question: base64Encode(question.codeUnits)).location;
   }
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Eurohang'),
-          centerTitle: true,
+      appBar: AppBar(
+        title: const Text('Eurohang'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            Text('Loading question ${questionId ?? 'random'}'),
+            const CircularProgressIndicator()
+          ],
         ),
-        body: const SingleChildScrollView());
+      ),
+    );
   }
 }
 
@@ -74,7 +81,7 @@ class HangmanRoute extends GoRouteData {
   Widget build(BuildContext context, GoRouterState state) {
     return HangmanScreen(
       question: Question.fromJson(
-        jsonDecode(question),
+        jsonDecode(String.fromCharCodes(base64Decode(question))),
       ),
     );
   }
@@ -98,7 +105,10 @@ class SettingsRoute extends GoRouteData {
 }
 
 final _router = GoRouter(
-    initialLocation: '/', debugLogDiagnostics: false, routes: $appRoutes);
+  initialLocation: '/',
+  debugLogDiagnostics: true,
+  routes: $appRoutes,
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
