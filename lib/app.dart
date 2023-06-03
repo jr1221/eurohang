@@ -106,7 +106,7 @@ class SettingsRoute extends GoRouteData {
 
 final _router = GoRouter(
   initialLocation: '/',
-  debugLogDiagnostics: true,
+  debugLogDiagnostics: false,
   routes: $appRoutes,
 );
 

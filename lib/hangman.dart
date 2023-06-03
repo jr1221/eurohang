@@ -6,6 +6,7 @@ import 'package:eurohang/question.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,6 +39,15 @@ const List<String> alphabet = [
   'z'
 ];
 
+enum SoundType {
+  correctLetter,
+  gameTransition,
+  incorrectLetter,
+  lost,
+  won,
+  oneLeft,
+}
+
 class HangmanScreen extends StatefulWidget {
   const HangmanScreen({Key? key, required this.question}) : super(key: key);
 
@@ -56,10 +66,36 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
   final TextEditingController _guessFormController = TextEditingController();
 
+  bool useSound = true;
+
+  Future<void> _playSound(SoundType sound) async {
+    if (!useSound) return;
+
+    await _audioPlayer.stop();
+    print(sound);
+    switch (sound) {
+      case SoundType.correctLetter:
+        await _audioPlayer.setAsset('assets/audio/correctLetter.wav');
+      case SoundType.gameTransition:
+        await _audioPlayer.setAsset('assets/audio/gameTransition.wav');
+      case SoundType.incorrectLetter:
+        await _audioPlayer.setAsset('assets/audio/incorrectLetter.wav');
+      case SoundType.lost:
+        await _audioPlayer.setAsset('assets/audio/lost.wav');
+      case SoundType.won:
+        await _audioPlayer.setAsset('assets/audio/win.wav');
+      case SoundType.oneLeft:
+        await _audioPlayer.setAsset('assets/audio/oneLeft.wav');
+    }
+    await _audioPlayer.play();
+  }
+
   @override
   void initState() {
     super.initState();
-    _audioPlayer.setAsset('assets/audio/gameTransition.wav').then((value) => _audioPlayer.play());
+    useSound = bool.parse(Hive.box<String>(ProjectConstants.settingsBoxKey)
+        .get(ProjectConstants.useSoundStorageKey, defaultValue: 'true')!);
+    _playSound(SoundType.gameTransition);
   }
 
   @override
@@ -70,54 +106,49 @@ class _HangmanScreenState extends State<HangmanScreen> {
     _audioPlayer.dispose();
   }
 
-  void _updateDialogs() {
+  void _updateDialogs(bool thisCorrect) {
+    if (!thisCorrect) {
+      _wrongLetters++;
+    }
+
     if (_wrongLetters > 9) {
       _lostUI();
-    } else if (_wrongLetters == 9) {
-      _oneLeftUI();
-    } else {
-      final strList = widget.question.guess.split('');
-      strList.removeWhere((element) => element == ' ');
-      for (String char in strList) {
-        if (!_lettersGuessed.contains(char.toLowerCase())) {
-          return;
-        }
+      return;
+    }
+    if (_wrongLetters == 9) {
+      _playSound(SoundType.oneLeft);
+      return;
+    }
+
+    final strList = widget.question.guess.split('');
+    strList.removeWhere((element) => element == ' ');
+    bool won = true;
+    for (String char in strList) {
+      if (!_lettersGuessed.contains(char.toLowerCase())) {
+        won = false;
       }
+    }
+    if (won) {
       _winUI();
+      return;
+    }
+
+    if (thisCorrect) {
+      _playSound(SoundType.correctLetter);
+    } else {
+      _playSound(SoundType.incorrectLetter);
     }
   }
 
-  Future<void> _oneLeftUI() async {
-    await _audioPlayer.stop();
-    await _audioPlayer.setAsset('assets/audio/oneLeft.wav');
-    await _audioPlayer.play();
-  }
-
-  Future<void> _incorrectLetterUI() async {
-    await _audioPlayer.stop();
-    await _audioPlayer.setAsset('assets/audio/incorrectLetter.wav');
-    await _audioPlayer.play();
-  }
-
-  Future<void> _correctLetterUI() async {
-    await _audioPlayer.stop();
-    await _audioPlayer.setAsset('assets/audio/correctLetter.wav');
-    await _audioPlayer.play();
-  }
-
-  Future<void> _winUI() async {
+  void _winUI() {
     endNotifUI(true);
-    await _audioPlayer.stop();
-    await _audioPlayer.setAsset('assets/audio/win.wav');
-    await _audioPlayer.play();
+    _playSound(SoundType.won);
     _confettiController.play();
   }
 
-  Future<void> _lostUI() async {
+  void _lostUI() {
     endNotifUI(false);
-    await _audioPlayer.stop();
-    await _audioPlayer.setAsset('assets/audio/lost.wav');
-    await _audioPlayer.play();
+    _playSound(SoundType.lost);
   }
 
   void endNotifUI(bool win) {
@@ -168,6 +199,24 @@ class _HangmanScreenState extends State<HangmanScreen> {
     };
   }
 
+  Map<ShortcutActivator, void Function()> _buildLetterShortcuts() {
+    Map<ShortcutActivator, void Function()> bindings =
+        <ShortcutActivator, void Function()>{};
+    for (final letter in alphabet) {
+      bindings[CharacterActivator(letter.toUpperCase())] = () {
+        setState(() {
+          _lettersGuessed.add(letter);
+          if (!widget.question.guess.toLowerCase().contains(letter)) {
+            _updateDialogs(false);
+          } else {
+            _updateDialogs(true);
+          }
+        });
+      };
+    }
+    return bindings;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,146 +225,153 @@ class _HangmanScreenState extends State<HangmanScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-              ),
-              Text('$_wrongLetters wrong letters'),
-              Image.asset(_imageAssetFromWrongGuesses(_wrongLetters)),
-              SizedBox(
-                width: 400,
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 40, crossAxisSpacing: 2.5),
-                  scrollDirection: Axis.vertical,
-                  itemCount: widget.question.guess.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final letter = widget.question.guess[index].toLowerCase();
-                    if (_lettersGuessed.contains(letter)) {
-                      return Text(
-                        letter,
-                        textScaleFactor: 1.5,
-                        textAlign: TextAlign.center,
-                      );
-                    } else {
-                      if (letter == ' ') {
-                        return const Text(
-                          '      ',
-                          textScaleFactor: 1.5,
-                          textAlign: TextAlign.center,
-                        );
-                      }
-                      return const Text(
-                        '_',
-                        textScaleFactor: 1.5,
-                        textAlign: TextAlign.center,
-                      );
-                    }
-                  },
-                ),
-              ),
-              GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    crossAxisSpacing: 0.0,
-                    childAspectRatio: 1.5),
-                itemCount: alphabet.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                scrollDirection: Axis.vertical,
-                itemBuilder: (context, index) {
-                  final letter = alphabet[index];
-                  if (_lettersGuessed.contains(letter)) {
-                    return TextButton(
-                      onPressed: null,
-                      child: Text(
-                        letter,
-                        textScaleFactor: 1.5,
-                      ),
-                    );
-                  } else {
-                    return TextButton(
-                      onPressed: () {
-                        setState(
-                          () {
-                            _lettersGuessed.add(letter);
-                            if (!widget.question.guess
-                                .toLowerCase()
-                                .contains(letter)) {
-                              _wrongLetters++;
-                              _incorrectLetterUI();
-                            } else {
-                              _correctLetterUI();
-                            }
-                            _updateDialogs();
-                          },
-                        );
-                      },
-                      child: Text(
-                        letter,
-                        textScaleFactor: 1.5,
-                      ),
-                    );
-                  }
-                },
-              ),
-              Row(
+        child: CallbackShortcuts(
+          bindings: _buildLetterShortcuts(),
+          child: Focus(
+            autofocus: true,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: const InputDecoration(
-                          hintText: 'Enter your best guess',
-                          labelText: 'Guess'),
-                      textCapitalization: TextCapitalization.none,
-                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      textInputAction: TextInputAction.done,
-                      maxLength: widget.question.guess.length,
-                      controller: _guessFormController,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (input) {
-                        final cleanedInput = input?.split('')
-                          ?..removeWhere((element) => element == ' ');
-                        for (String char in cleanedInput ?? []) {
-                          if (!alphabet.contains(char)) {
-                            return 'Invalid character "$char"';
+                  ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                  ),
+                  Text('$_wrongLetters wrong letters'),
+                  Image.asset(_imageAssetFromWrongGuesses(_wrongLetters)),
+                  SizedBox(
+                    width: 400,
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 40, crossAxisSpacing: 2.5),
+                      scrollDirection: Axis.vertical,
+                      itemCount: widget.question.guess.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final letter =
+                            widget.question.guess[index].toLowerCase();
+                        if (_lettersGuessed.contains(letter)) {
+                          return Text(
+                            letter,
+                            textScaleFactor: 1.5,
+                            textAlign: TextAlign.center,
+                          );
+                        } else {
+                          if (letter == ' ') {
+                            return const Text(
+                              '      ',
+                              textScaleFactor: 1.5,
+                              textAlign: TextAlign.center,
+                            );
                           }
+                          return const Text(
+                            '_',
+                            textScaleFactor: 1.5,
+                            textAlign: TextAlign.center,
+                          );
                         }
-                        return null;
                       },
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      if (widget.question.guess.toLowerCase() ==
-                          _guessFormController.text.toLowerCase()) {
-                        _winUI();
+                  GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 6,
+                            crossAxisSpacing: 0.0,
+                            childAspectRatio: 1.5),
+                    itemCount: alphabet.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    scrollDirection: Axis.vertical,
+                    itemBuilder: (context, index) {
+                      final letter = alphabet[index];
+                      if (_lettersGuessed.contains(letter)) {
+                        return TextButton(
+                          onPressed: null,
+                          child: Text(
+                            letter,
+                            textScaleFactor: 1.5,
+                          ),
+                        );
                       } else {
-                        BotToast.showText(
-                            text:
-                                '${_guessFormController.text.toLowerCase()} is an incorrect Guess');
-                        _guessFormController.clear();
+                        return TextButton(
+                          onPressed: () {
+                            setState(
+                              () {
+                                _lettersGuessed.add(letter);
+                                if (!widget.question.guess
+                                    .toLowerCase()
+                                    .contains(letter)) {
+                                  _updateDialogs(false);
+                                } else {
+                                  _updateDialogs(true);
+                                }
+                              },
+                            );
+                          },
+                          child: Text(
+                            letter,
+                            textScaleFactor: 1.5,
+                          ),
+                        );
                       }
                     },
-                    child: const Text('Check Guess'),
                   ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          decoration: const InputDecoration(
+                              hintText: 'Enter your best guess',
+                              labelText: 'Guess'),
+                          textCapitalization: TextCapitalization.none,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                          textInputAction: TextInputAction.done,
+                          maxLength: widget.question.guess.length,
+                          controller: _guessFormController,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          validator: (input) {
+                            final cleanedInput = input?.split('')
+                              ?..removeWhere((element) => element == ' ');
+                            for (String char in cleanedInput ?? []) {
+                              if (!alphabet.contains(char)) {
+                                return 'Invalid character "$char"';
+                              }
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (widget.question.guess.toLowerCase() ==
+                              _guessFormController.text.toLowerCase()) {
+                            _winUI();
+                          } else {
+                            BotToast.showText(
+                                text:
+                                    '${_guessFormController.text.toLowerCase()} is an incorrect Guess');
+                            _guessFormController.clear();
+                          }
+                        },
+                        child: const Text('Check Guess'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  ElevatedButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Exit'),
+                  )
                 ],
               ),
-              const SizedBox(
-                height: 16,
-              ),
-              ElevatedButton(
-                onPressed: () => context.pop(),
-                child: const Text('Exit'),
-              )
-            ],
+            ),
           ),
         ),
       ),

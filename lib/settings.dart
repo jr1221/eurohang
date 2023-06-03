@@ -95,6 +95,42 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ]),
+            Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: 24,
+                      end: 24,
+                      bottom: 19 * MediaQuery.of(context).textScaleFactor,
+                      top: 19 * MediaQuery.of(context).textScaleFactor,
+                    ),
+                    child: Text(
+                      'Use Sound',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 8,
+                  ),
+                  child: Switch(
+                    value: bool.parse(box.get(
+                        ProjectConstants.useSoundStorageKey,
+                        defaultValue: 'true')!),
+                    onChanged: (bool value) {
+                      if (value) {
+                        box.put(ProjectConstants.useSoundStorageKey, 'true');
+                      } else {
+                        box.put(ProjectConstants.useSoundStorageKey, 'false');
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
             InkWell(
               onTap: () async => await ColorPicker(
                 color: Color(

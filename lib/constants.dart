@@ -3,6 +3,7 @@ final class ProjectConstants {
 
   static const String darkModeStorageKey =
       'darkMode'; // bool :  darkMode = true (dark) darkMode = false (light) darkMode = not present (System)
+  static const String useSoundStorageKey = 'useSound'; // true/false
 
   static const String colorSchemeStorageKey = 'eurohang_colorScheme';
 
