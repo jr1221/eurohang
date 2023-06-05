@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:eurohang/app.dart';
 import 'package:eurohang/constants.dart';
 import 'package:eurohang/question.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -53,7 +53,13 @@ class BrowseQuestionsScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('${question.id.toString()} -->  '),
+                              TextButton(
+                                child: Text('${question.id.toString()} -->  '),
+                                onPressed: () {
+                                  LoadHangmanRoute(questionId: question.id)
+                                      .push(context);
+                                },
+                              ),
                               Text(question.guess),
                               TextButton(
                                 child: Text(

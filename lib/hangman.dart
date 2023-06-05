@@ -72,7 +72,7 @@ class _HangmanScreenState extends State<HangmanScreen> {
     if (!useSound) return;
 
     await _audioPlayer.stop();
-    print(sound);
+
     switch (sound) {
       case SoundType.correctLetter:
         await _audioPlayer.setAsset('assets/audio/correctLetter.wav');
@@ -192,17 +192,19 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
   String _imageAssetFromWrongGuesses(int wrongGuesses) {
     return switch (wrongGuesses) {
-      <= 4 => '${ProjectConstants.imagesPath}$wrongGuesses.png',
+      <= 5 => '${ProjectConstants.imagesPath}$wrongGuesses.png',
       <= 9 =>
-        '${ProjectConstants.imagesPath}${widget.question.id}-$wrongGuesses.png',
-      _ => '${ProjectConstants.imagesPath}${widget.question.id}-9.png',
+        '${ProjectConstants.imagesPath}${widget.question.id}/$wrongGuesses.png',
+      _ => '${ProjectConstants.imagesPath}${widget.question.id}/9.png',
     };
   }
 
   Map<ShortcutActivator, void Function()> _buildLetterShortcuts() {
     Map<ShortcutActivator, void Function()> bindings =
         <ShortcutActivator, void Function()>{};
-    for (final letter in alphabet) {
+    final alphabetLeft =
+        alphabet.where((element) => !_lettersGuessed.contains(element));
+    for (final letter in alphabetLeft) {
       bindings[CharacterActivator(letter.toUpperCase())] = () {
         setState(() {
           _lettersGuessed.add(letter);
@@ -238,7 +240,14 @@ class _HangmanScreenState extends State<HangmanScreen> {
                     blastDirectionality: BlastDirectionality.explosive,
                   ),
                   Text('$_wrongLetters wrong letters'),
-                  Image.asset(_imageAssetFromWrongGuesses(_wrongLetters)),
+                  SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: Image.asset(
+                      _imageAssetFromWrongGuesses(_wrongLetters),
+                      fit: BoxFit.scaleDown,
+                    ),
+                  ),
                   SizedBox(
                     width: 400,
                     child: GridView.builder(
@@ -261,9 +270,10 @@ class _HangmanScreenState extends State<HangmanScreen> {
                         } else {
                           if (letter == ' ') {
                             return const Text(
-                              '      ',
+                              '  ⏡  ',
                               textScaleFactor: 1.5,
                               textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey),
                             );
                           }
                           return const Text(
@@ -277,10 +287,8 @@ class _HangmanScreenState extends State<HangmanScreen> {
                   ),
                   GridView.builder(
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 6,
-                            crossAxisSpacing: 0.0,
-                            childAspectRatio: 1.5),
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 100),
                     itemCount: alphabet.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -368,7 +376,10 @@ class _HangmanScreenState extends State<HangmanScreen> {
                   ElevatedButton(
                     onPressed: () => context.pop(),
                     child: const Text('Exit'),
-                  )
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                      'Hint: Shift type a letter to select it without using your cursor!'),
                 ],
               ),
             ),
